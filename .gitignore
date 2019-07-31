@@ -1,0 +1,15 @@
+*.pyc
+__pycache__/
+
+.*.swp
+
+.pytest_cache/
+.coverage
+htmlcov/
+
+setup.py
+dist/
+*.egg-info/
+
+mountfolder/
+
