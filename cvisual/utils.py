@@ -5,7 +5,7 @@ utils
 Various utility functions.
 
 """
-from os.path import join, splitext
+from os.path import join, splitext, basename
 
 
 def enforce_file_compliments(bam_list, vcf_list):
@@ -35,3 +35,20 @@ def enforce_file_compliments(bam_list, vcf_list):
         if bam_file not in bam_list:
             print(vcf_file, " doesn't have an associated .bam file")
             vcf_list.remove(vcf_file)
+
+
+def get_compliment(file_list, file):
+    """Returns a file path from the provided list that has the same name as the
+    file passed as the second arugment.
+
+    :param file_list: A list of paths with the same filetype.
+    :type file_list: list
+    :param file: A single path with an opposite filetype.
+    :type file: str
+    :return: A file path
+    :return type: str
+    """
+    compliment = splitext(file)[0]
+    for path in file_list:
+        if splitext(basename(path))[0] == compliment:
+            return path

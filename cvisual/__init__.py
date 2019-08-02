@@ -11,6 +11,8 @@ import glob
 import pysam
 
 from cvisual.utils import enforce_file_compliments
+from cvisual.colony import Base, Colony
+
 
 def main(genome_directory):
     """Will generate a pandas dataframe populated with colony information.
@@ -32,10 +34,8 @@ def main(genome_directory):
     # information.
     enforce_file_compliments(bam_files, vcf_files)
 
+    # Future Colony classes will inherit from the lists defined in the
+    # Base class.
+    Base.bam_list, Base.vcf_list = bam_files, vcf_files
+
     # TODO: create and register Colony classes with the Registry class
-
-
-
-
-
-
