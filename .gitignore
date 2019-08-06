@@ -3,7 +3,7 @@ __pycache__/
 
 .*.swp
 
-mountfolder
+mountfolder/
 
 .pytest_cache/
 .coverage
