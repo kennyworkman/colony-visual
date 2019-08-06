@@ -5,29 +5,43 @@ cvisualize
 A library for visualizing aligned genomic information.
 
 """
-
-import os
-import glob
-import pysam
-
-from cvisual.utils import enforce_file_compliments
-from cvisual.colony import Base, Colony
+import logging
+from cvisual.utils import get_bam_vcf_files, enforce_file_compliments
+from cvisual.colony import (Base, Colony, ColonyInstantiationError,
+                            ColonyValidationError)
+from cvisual.registry import colony_list, export_dataframe
 
 
 def main(genome_directory):
+    """Script that generates a dataframe and logs errors."""
+
+    logging.basicConfig(filename='cvisual.log', level=logging.INFO)
+    # Handler writes messages to sys.stderr in addition to writing to a log
+    # file. Displays in terminal output
+    console = logging.StreamHandler()
+    logging.getLogger().addHandler(console)
+
+    generate_dataframe(genome_directory)
+
+    print(export_dataframe())
+    print(colony_list)
+
+
+def generate_dataframe(genome_directory):
     """Will generate a pandas dataframe populated with colony information.
+
+    TODO: more documentation
+
+    :param genome_directory: Path to the directory of interest containing .vcf
+    and .bam files
+    :type genome_directory: str
+    :returns: A `DataFrame` from the pandas library
     """
+
     assert isinstance(genome_directory, str), "Directory parameter needs to" \
                                               " a string."
 
-    if not os.path.exists(genome_directory):
-        raise FileNotFoundError("The given directory doesn't exist")
-
-    bam_glob = os.path.join(os.path.abspath(genome_directory), "**/*.bam")
-    vcf_glob = os.path.join(os.path.abspath(genome_directory), "**/*.vcf")
-
-    bam_files = glob.glob(bam_glob, recursive=True)
-    vcf_files = glob.glob(vcf_glob, recursive=True)
+    bam_files, vcf_files = get_bam_vcf_files(genome_directory)
 
     # Essentially culling out .bam or .vcf files that don't have a
     # corresponding match. Eliminates colony parsing with incomplete
@@ -38,4 +52,14 @@ def main(genome_directory):
     # Base class.
     Base.bam_list, Base.vcf_list = bam_files, vcf_files
 
-    # TODO: create and register Colony classes with the Registry class
+    for bam_file in bam_files:
+        try:
+            Colony(bam_file)
+        except (ColonyValidationError, ColonyInstantiationError) as e:
+            logging.warning(e)
+
+    return export_dataframe()
+
+
+if __name__ == "__main__":
+    main('/Users/kenny/projects/colony-visual/mountfolder')

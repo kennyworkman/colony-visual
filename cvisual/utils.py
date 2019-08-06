@@ -5,7 +5,28 @@ utils
 Various utility functions.
 
 """
-from os.path import join, splitext, basename
+import os
+import glob
+
+
+def get_bam_vcf_files(directory):
+    """Return a list of .vcf paths and .bam paths from a valid directory
+
+    :param directory: Valid path to a DIVA style directory
+    :param type: str
+    :return: A list of `.vcf` files and a list of `.bam` file
+    :return type: list
+    """
+    if not os.path.exists(directory):
+        raise FileNotFoundError("The given directory doesn't exist")
+
+    bam_glob = os.path.join(os.path.abspath(directory), "**/*.bam")
+    vcf_glob = os.path.join(os.path.abspath(directory), "**/*.vcf")
+
+    bam_files = glob.glob(bam_glob, recursive=True)
+    vcf_files = glob.glob(vcf_glob, recursive=True)
+
+    return bam_files, vcf_files
 
 
 def enforce_file_compliments(bam_list, vcf_list):
@@ -21,19 +42,19 @@ def enforce_file_compliments(bam_list, vcf_list):
     :type vcf_list: list
     :return: None - this function mutates the provided lists.
     """
-
     for bam_file in bam_list:
-        vcf_file = splitext(bam_file)[0] + ".vcf"
+        vcf_file = os.path.splitext(bam_file)[0] + ".vcf"
         if vcf_file not in vcf_list:
-            print(bam_file, " doesn't have an associated .vcf-",
-                  vcf_file, "-file.")
+            print(bam_file, "doesn't have an associated .vcf file (",
+                  vcf_file, ").")
             bam_list.remove(bam_file)
 
     # TODO: Definitely a better way to do this...
     for vcf_file in vcf_list:
-        bam_file = splitext(vcf_file)[0] + ".bam"
+        bam_file = os.path.splitext(vcf_file)[0] + ".bam"
         if bam_file not in bam_list:
-            print(vcf_file, " doesn't have an associated .bam file")
+            print(vcf_file, "doesn't have an associated .bam file (",
+                  bam_file, ").")
             vcf_list.remove(vcf_file)
 
 
@@ -46,9 +67,9 @@ def get_compliment(file_list, file):
     :param file: A single path with an opposite filetype.
     :type file: str
     :return: A file path
-    :return type: str
+    :return type: str, None if nothing found
     """
-    compliment = splitext(file)[0]
+    compliment = os.path.splitext(file)[0]
     for path in file_list:
-        if splitext(basename(path))[0] == compliment:
+        if os.path.splitext(path)[0] == compliment:
             return path
