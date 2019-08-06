@@ -6,6 +6,7 @@ __pycache__/
 .pytest_cache/
 .coverage
 htmlcov/
+tests/dummy_data/
 
 setup.py
 dist/
