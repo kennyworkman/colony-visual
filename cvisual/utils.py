@@ -9,19 +9,27 @@ import os
 import glob
 
 
-def get_bam_vcf_files(directory):
+def get_bam_vcf_files(directory, username=None):
     """Return a list of .vcf paths and .bam paths from a valid directory
 
     :param directory: Valid path to a DIVA style directory
-    :param type: str
+    :type directory: str
+    :param username: Username used to filter files
+    :type username: str
     :return: A list of `.vcf` files and a list of `.bam` file
     :return type: list
     """
     if not os.path.exists(directory):
         raise FileNotFoundError("The given directory doesn't exist")
 
-    bam_glob = os.path.join(os.path.abspath(directory), "**/*.bam")
-    vcf_glob = os.path.join(os.path.abspath(directory), "**/*.vcf")
+    # Print empty string if string format variable is None
+    # https://stackoverflow.com/questions/33271212/make-string-format-ignore-none
+    bam_glob = os.path.join(os.path.abspath(directory),
+                            "**/*{}*.bam".format("" if username is None
+                                                 else username))
+    vcf_glob = os.path.join(os.path.abspath(directory),
+                            "**/*{}*.vcf".format("" if username is None
+                                                 else username))
 
     bam_files = glob.glob(bam_glob, recursive=True)
     vcf_files = glob.glob(vcf_glob, recursive=True)

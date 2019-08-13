@@ -8,8 +8,8 @@ Defines the Colony class.
 """
 
 from cvisual.utils import get_compliment
-from cvisual.registry import register
 from cvisual.variant import Variant
+from cvisual.registry import Registry
 import logging
 import pysam
 import os
@@ -35,40 +35,39 @@ class ColonyValidationError(Exception):
     pass
 
 
-class Base():
-    """The Base class for the `Colony` object.
-
-    Stores lists of file paths that the `Colony` class can easily reference to
-    find a file compliment.
-    """
-    bam_list = []
-    vcf_list = []
-
-    def __repr__(self):
-        return "A Base Class that stores lists of vcf and bam files"
-
-
-class Colony(Base):
+class Colony():
     """An object to represent the genomic information associated with a
     single colony.
+
+    TODO: Documentation...
+
+    :param
 
     **Can be instantiated with either .bam or .vcf file. It will pull its
     compliment from another list**
     """
 
-    def __init__(self, starter_file, threshold=30, qualbydepth=2,
+    def __init__(self, starter_file, registry, threshold=30, qualbydepth=2,
                  fisherstrand=60, strandoddsratio=3):
         """Assign complimentary .vcf/.bam file, assign coverage score, assign
         validated variants array, and register to the Registry
 
         :param starter_file: A `.vcf` or `.bam` file path
         :type starter_file: str
+        :param registry: An instance of the `Registry` class from the registry
+        module. Keeps a running list of all relevant .vcf / .bam files and
+        Colony objects.
+        :type registry: `Registry` object.
         """
+        assert isinstance(registry, Registry), "registry attribute used in" \
+            " instantiation must be a Registry object defined in cvisual.registry"
+
         self.threshold = threshold
         self.qualbydepth = qualbydepth
         self.fisherstrand = fisherstrand
         self.strandoddsratio = strandoddsratio
         self.name = os.path.basename(os.path.splitext(starter_file)[0])
+        self.registry = registry
 
         # The idea here is to allow either of the two required .vcf / .bam
         # files to instantiate the Colony. This way if one of them is missing
@@ -93,14 +92,20 @@ class Colony(Base):
                                                      self.strandoddsratio)
         if self.has_necessary_data():
             # function imported from the cvisual.registry module
-            register(self)
+            self.register()
 
     def __repr__(self):
         return self.name
 
+    def register(self):
+        """Registers self with the `Registry` class pointed to by the
+        `self.registry` attribute
+        """
+        self.registry.register(self)
+
     def assign_compliment_file(self, starter_file):
-        """Assigns the missing .vcf / .bam file from the list defined in the
-        Base class.
+        """Assigns the missing .vcf / .bam file by consulting the Registry for
+        a list of relevant files.
 
         For example, if the Colony was instantiated with a .bam file, it will
         assign a .vcf file to the `self.vcf_file` attribute.
@@ -115,9 +120,11 @@ class Colony(Base):
         "in the constructor."
 
         if starter_file[-3:] == 'bam':
-            self.vcf_file = get_compliment(self.vcf_list, starter_file)
+            self.vcf_file = get_compliment(
+                self.registry.vcf_list, starter_file)
         elif starter_file[-3:] == 'vcf':
-            self.bam_file = get_compliment(self.bam_list, starter_file)
+            self.bam_file = get_compliment(
+                self.registry.bam_list, starter_file)
         else:
             raise ColonyInstantiationError("Need two files to proceed; \
                                            missing one.")
@@ -193,6 +200,7 @@ class Colony(Base):
                         (sor < 3)):
                     valid_variant = Variant(rec.pos, rec.ref, rec.alts)
                     valid_variants.append(valid_variant)
+
             except KeyError:
                 logging.warning(
                     "Colony {} lacks quality "
@@ -216,7 +224,8 @@ class Colony(Base):
         :type minimum_coverage: float
         :returns: Boolean True or False
         """
-        return self.coverage_score > minimum_coverage and maximum_variants > len(self.valid_variants)
+        return ((self.coverage_score > minimum_coverage) and
+                (maximum_variants > len(self.valid_variants)))
 
     def has_necessary_data(self):
         """Checks Colony instance for necessary attributes.

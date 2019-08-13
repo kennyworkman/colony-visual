@@ -57,5 +57,11 @@ def test_get_bam_vcf_files(dummy_data):
 
     vcf_files, bam_files = get_bam_vcf_files('./tests/dummy_data')
 
-    assert len(vcf_files) == 8 and len(bam_files) == 8, "Incorrect "
-    "functionality."
+    assert len(vcf_files) == 8 and len(bam_files) == 8, "Incorrect " \
+        "functionality."
+
+    vcf_files, bam_files = get_bam_vcf_files('./tests/dummy_data',
+                                             username='G1')
+
+    assert len(vcf_files) == 1 and len(bam_files) == 1, "Incorrect " \
+        "length of vcf_files and bam_files when using a username"
